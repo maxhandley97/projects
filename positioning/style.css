@@ -1,0 +1,30 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    background: rgb(55, 55, 55);
+}
+div {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 1rem;
+    background-color: red;
+}
+/* }
+body :nth-child(2) {
+    background-color: blue;
+} */
+div:nth-of-type(1) {
+    background-color: green;
+}
+div:nth-of-type(2) {
+    position: fixed;
+    background-color: blue;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+div:nth-of-type(3) {
+    background-color: yellow;
+}

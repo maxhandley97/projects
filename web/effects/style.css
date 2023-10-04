@@ -1,0 +1,38 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+@keyframes colorful-text {
+    0% {
+        background: salmon;
+    }
+    50%{
+        background: blue;
+        transform: translate(100px);
+
+    }
+    100% {
+        background: purple;
+        transform: skew(30deg);
+    }
+
+}
+div {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: purple;
+    transition: 2s;
+
+
+}
+div:hover {
+    /* background: blue; */
+    /* width: 200px; */
+    animation: colorful-text 3s 3 alternate;
+    left: 0;
+    transform: translatex(100px) rotate(90deg) scale(0.5, 2);
+    /* height: 200px; */
+}
