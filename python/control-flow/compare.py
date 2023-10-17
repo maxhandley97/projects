@@ -65,11 +65,11 @@
 #     case _:
 #         print ('not valid shape')
 
-ccnum = (input("what is your credit card number, with no spaces? "))
-if ccnum[0] == "4": 
-    if len(ccnum) == 13 or 16:
-        print("your bank number is " + ccnum[1:6] + "and your account number is " + ccnum[6:-1])
-else:
-    print("invalid Visa Card number")
+# ccnum = (input("what is your credit card number, with no spaces? "))
+# if ccnum[0] == "4": 
+#     if len(ccnum) == 13 or 16:
+#         print("your bank number is " + ccnum[1:6] + "and your account number is " + ccnum[6:-1])
+# else:
+#     print("invalid Visa Card number")
 
               

@@ -36,17 +36,17 @@
     #if spare, return 10 + ball3
     #simplest scenario, not strike or spare
 
-def calc_frame(x, y, z):
-    if (x+y) < 10:
-        result = x + y
-    else:
-        result = x + y + z
-    return result
-#main
-x = int(input("Enter roll 1: "))
-y = int(input("Enter roll 2: "))
-z = int(input("Enter roll 3: "))
-print(calc_frame(x, y, z))
+# def calc_frame(x, y, z):
+#     if (x+y) < 10:
+#         result = x + y
+#     else:
+#         result = x + y + z
+#     return result
+# #main
+# x = int(input("Enter roll 1: "))
+# y = int(input("Enter roll 2: "))
+# z = int(input("Enter roll 3: "))
+# print(calc_frame(x, y, z))
 
 # def dis(price: int, discount: int) -> float:
 # 	total_discout = round(price * (1 - discount / 100), 2)
@@ -62,7 +62,12 @@ print(calc_frame(x, y, z))
 # print(calc_frame(0, 10, 5))    # 15
 # print(calc_frame(5, 0, 10))    # 5
 
-
-
+arr = [5, 22, 29, 39, 19, 51, 78, 96, 84]
+i = 0
+while (i<arr.len() -1) and (arr[i] < arr [i+1]):
+    i += i
+    arr[i] = arr[i+1]
+    arr[i+1] = arr[i]
+print(i)
 
 
