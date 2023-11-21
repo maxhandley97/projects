@@ -1,31 +1,40 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
-import json
 from flask_marshmallow import Marshmallow
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://trello_dev:spameggs123@127.0.0.1:5432/trello' #database connection string
-
+# avoid depreciation warning
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app) #connects two
 ma = Marshmallow(app) 
+bcrypt = Bcrypt(app)
 
 class Card(db.Model): #extends db.model
     __tablename__ = 'cards' #dunder to name table, default is singular card
     
     id = db.Column(db.Integer, primary_key=True) #sqlalchemy sets up autokey
     title = db.Column(db.String(100))
-    description = db.Column(db.Text())
+    description = db.Column(db.Text)
     status = db.Column(db.String(30))
-    date_created = db.Column(db.Date())
-
-
+    date_created = db.Column(db.Date)
 
 
 class CardSchema(ma.Schema): #serialise card schema
     class Meta:
-        fields = ('id', 'title', 'description', 'status', 'data_created')
+        fields = ('id', 'title', 'description', 'status', 'date_created')
+
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    email = db.Column(db.String, nullable=False, unique=True)
+    password = db.Column(db.String, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
 @app.cli.command('db_create')
 def db_create(): #have to work in context of flask app
@@ -35,6 +44,18 @@ def db_create(): #have to work in context of flask app
 
 @app.cli.command('db_seed')
 def db_seed():
+    users = [
+        User(
+            email='admin@spam.com',
+            password=bcrypt.generate_password_hash('spinynorman').decode('utf8'),
+            is_admin=True
+        ),
+        User(
+            name='John Cleese',
+            email='cleese@spam.com',
+            password=bcrypt.generate_password_hash('spinynorman').decode('utf8')
+        )
+    ]
     cards = [
     Card(
         title = 'Start the project',
@@ -54,10 +75,9 @@ def db_seed():
         status ='In progress',
         date_created = date.today()
     )]
-
+    db.session.add_all(users)
     db.session.add_all(cards)
     db.session.commit()
-
     print('Database seeded')
 
 # @app.cli.command('all_cards')
@@ -70,13 +90,16 @@ def db_seed():
 #         print(card.__dict__) 
     
 
-@app.route('/cards')
+@app.route('/cards', methods=['GET'])
 def all_cards():
-    # select * from cards;
-    stmt = db.select(Card).where(db.or_(Card.status != 'Done', Card.id > 2)).order_by(Card.title.desc())
-    cards = db.session.scalars(stmt).all()
-    return CardSchema(many=True).dump(cards)
+    # select * from cards in stmt variable to ;
+    stmt = db.select(Card).where(db.or_(Card.status != 'Done', Card.id > 2)).order_by(Card.title.desc()) #create statement sql
+    cards = db.session.scalars(stmt).all() #execute method, scalars to have singular objects/model instances
+    return CardSchema(many=True).dump(cards) #flask takes care of serialisation
 
 @app.route('/')
 def index():
     return 'Hello, world'
+
+#so basically flask allows us to create route that can be access by clients and then 
+# flask sqlalchemy + marshmallow allows us to create object out of our database to manipulate and then convert it to json so that the data can be transmitted via the routes and therefore that's the transition of data ?
