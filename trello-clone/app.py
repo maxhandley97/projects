@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from flask_marshmallow import Marshmallow
@@ -26,6 +26,10 @@ class Card(db.Model): #extends db.model
 class CardSchema(ma.Schema): #serialise card schema
     class Meta:
         fields = ('id', 'title', 'description', 'status', 'date_created')
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'name', 'email', 'password', 'is_admin')
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -89,8 +93,49 @@ def db_seed():
 #     for card in cards:
 #         print(card.__dict__) 
     
+@app.route('/users/register', methods=['POST'])
+def register():
+    #Parse incoming POST body through schema
+    user_info = UserSchema(exclude=['id']).load(request.json)
+    #create new user with parsed data
+    user = User(
+        email=user_info['email'],
+        password=bcrypt.generate_password_hash(user_info['password']).decode('utf8'),
+        name=user_info.get('name', '')
+    )
+    db.session.add(user) #add and commmit new user to the database
+    db.session.commit()
+    # print(request.json) - used for 
+    # print(user.__dict__)
+    # return 'ok', 201
+    return UserSchema(exclude=['password']).dump(user), 201 #return the new user
 
-@app.route('/cards', methods=['GET'])
+@app.route('/users/<userId>', methods=['PATCH'])
+def update_user(userId):
+    #Parse incoming POST body through schema
+    user = User.query.get(userId)
+    #create new user with parsed data
+    user.name = request.json.get('name')
+
+    db.session.commit()
+    # print(request.json) - used for 
+    # print(user.__dict__)
+    # return 'ok', 201
+    return UserSchema(exclude=['password']).dump(user), 201 #return the new user
+
+@app.route('/users/<userId>', methods=['DELETE'])
+def delete_user(userId):
+    #Parse incoming POST body through schema
+    #Parse incoming POST body through schema
+    User.query.filter_by(id=userId).delete()
+   
+    db.session.commit()
+
+    return "Success", 201 #return the n
+    # print(request.json) - used for 
+
+
+@app.route('/cards')
 def all_cards():
     # select * from cards in stmt variable to ;
     stmt = db.select(Card).where(db.or_(Card.status != 'Done', Card.id > 2)).order_by(Card.title.desc()) #create statement sql
