@@ -1,21 +1,35 @@
-from flask import Flask, request
+from flask import Flask, request, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token #make sure valid token is parsed through with request
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity #create a token and ensure token in request header/ get jwt looks in header, gets token, decodes it, pulls out sub and returns it
 from datetime import timedelta
+from os import environ
+
+print(environ.get('JWT_KEY'))
 
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 'Ministry of Silly Walks'
+app.config['JWT_SECRET_KEY'] = environ.get('JWT_KEY') #used to sign JWT
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://trello_dev:spameggs123@127.0.0.1:5432/trello' #database connection string
 # avoid depreciation warning
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app) #connects two
-ma = Marshmallow(app) 
+ma = Marshmallow(app) #initialises, connects with flask
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
+
+def admin_required():
+    user_email = get_jwt_identity()
+    stmt = db.select(User).where(User.email == user_email)
+    user = db.session.scalar(stmt)
+    if not (user.is_admin and user):
+        abort(401)
+
+@app.errorhandler(401)
+def unauthorized(err):
+    return {'error': 'you are not authorized to access this resource'}
 
 class Card(db.Model): #extends db.model
     __tablename__ = 'cards' #dunder to name table, default is singular card
@@ -101,7 +115,7 @@ def db_seed():
 def register():
     try:
         #Parse incoming POST body through schema
-        user_info = UserSchema(exclude=['id']).load(request.json)
+        user_info = UserSchema(exclude=['id', 'is_admin']).load(request.json)
         #create new user with parsed data
         user = User(
             email=user_info['email'],
@@ -164,7 +178,11 @@ def delete_user(userId):
 
 
 @app.route('/cards')
+@jwt_required()
 def all_cards():
+    admin_required()
+    #1 get token from user instance,
+   
     # select * from cards in stmt variable to ;
     # stmt = db.select(Card).where(db.or_(Card.status != 'Done', Card.id > 2)).order_by(Card.title.desc()) #create statement sql
     stmt = db.select(Card)
