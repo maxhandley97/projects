@@ -1,28 +1,16 @@
 from flask import Flask, request, abort
-from flask_sqlalchemy import SQLAlchemy
-from datetime import date
-from flask_marshmallow import Marshmallow
-from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity #create a token and ensure token in request header/ get jwt looks in header, gets token, decodes it, pulls out sub and returns it
-from datetime import timedelta
-from os import environ
+from flask_jwt_extended import jwt_required, get_jwt_identity #create a token and ensure token in request header/ get jwt looks in header, gets token, decodes it, pulls out sub and returns it
+from setup import *
+from models.user import User, UserSchema
+from models.card import Card, CardSchema
+from blueprints.cli_bp import db_commands
+from blueprints.users_bp import users_bp
 
-print(environ.get('JWT_KEY'))
-
-app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = environ.get('JWT_KEY') #used to sign JWT
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://trello_dev:spameggs123@127.0.0.1:5432/trello' #database connection string
-# avoid depreciation warning
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app) #connects two
-ma = Marshmallow(app) #initialises, connects with flask
-bcrypt = Bcrypt(app)
-jwt = JWTManager(app)
 
 def admin_required():
     user_email = get_jwt_identity()
-    stmt = db.select(User).where(User.email == user_email)
+    stmt = db.select(User).filter_by(email=user_email)
     user = db.session.scalar(stmt)
     if not (user.is_admin and user):
         abort(401)
@@ -31,76 +19,10 @@ def admin_required():
 def unauthorized(err):
     return {'error': 'you are not authorized to access this resource'}
 
-class Card(db.Model): #extends db.model
-    __tablename__ = 'cards' #dunder to name table, default is singular card
-    
-    id = db.Column(db.Integer, primary_key=True) #sqlalchemy sets up autokey
-    title = db.Column(db.String(100))
-    description = db.Column(db.Text)
-    status = db.Column(db.String(30))
-    date_created = db.Column(db.Date)
 
+app.register_blueprint(db_commands)
+app.register_blueprint(users_bp)
 
-class CardSchema(ma.Schema): #serialise card schema
-    class Meta:
-        fields = ('id', 'title', 'description', 'status', 'date_created')
-
-class UserSchema(ma.Schema):
-    class Meta:
-        fields = ('id', 'name', 'email', 'password', 'is_admin')
-
-class User(db.Model):
-    __tablename__ = 'users'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    email = db.Column(db.String, nullable=False, unique=True)
-    password = db.Column(db.String, nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)
-
-@app.cli.command('db_create')
-def db_create(): #have to work in context of flask app
-    db.drop_all() #drop and recreate
-    db.create_all()
-    print('Created tables')
-
-@app.cli.command('db_seed')
-def db_seed():
-    users = [
-        User(
-            email='admin@spam.com',
-            password=bcrypt.generate_password_hash('spinynorman').decode('utf8'),
-            is_admin=True
-        ),
-        User(
-            name='John Cleese',
-            email='cleese@spam.com',
-            password=bcrypt.generate_password_hash('spinynorman').decode('utf8')
-        )
-    ]
-    cards = [
-    Card(
-        title = 'Start the project',
-        description = 'Stage 1 - Create ERD',
-        status ='Done',
-        date_created = date.today()
-    ),
-    Card(
-        title = 'ORM Queries',
-        description = 'Stage 2 - Implement CRUD queries',
-        status ='In progress',
-        date_created = date.today()
-    ),
-    Card(
-        title = 'Marshmallow',
-        description = 'Stage 3 - Implement JSONify of models',
-        status ='In progress',
-        date_created = date.today()
-    )]
-    db.session.add_all(users)
-    db.session.add_all(cards)
-    db.session.commit()
-    print('Database seeded')
 
 # @app.cli.command('all_cards')
 # def all_cards(): #by default SQLALchemy method will do *, comma seperate to stack
@@ -111,45 +33,6 @@ def db_seed():
 #     for card in cards:
 #         print(card.__dict__) 
     
-@app.route('/users/register', methods=['POST'])
-def register():
-    try:
-        #Parse incoming POST body through schema
-        user_info = UserSchema(exclude=['id', 'is_admin']).load(request.json)
-        #create new user with parsed data
-        user = User(
-            email=user_info['email'],
-            password=bcrypt.generate_password_hash(user_info['password']).decode('utf8'),
-            name=user_info.get('name', '')
-        )
-        db.session.add(user) #add and commmit new user to the database
-        db.session.commit()
-        # print(request.json) - used for 
-        # print(user.__dict__)
-        # return 'ok', 201
-        return UserSchema(exclude=['password']).dump(user), 201 #return the new user, dump instead of dumps because the header will 
-    except IntegrityError:
-        return {'error': 'Email address already in use'}, 409
-
-@app.route('/users/login', methods=['POST'])
-def login():
-    #1. parse incoming POST body through the schema
-    user_info = UserSchema(exclude=['id', 'name', 'is_admin']).load(request.json)
-    #2. select user from db, with email that matches the one in the post body, can print these steps to debug
-    stmt = db.select(User).where(User.email == user_info['email'])
-    user = db.session.scalar(stmt)
-    #3. Check the password hash
-    if user and bcrypt.check_password_hash(user.password, user_info['password']): #method of bcrypt, checks hash password in db and user made posswor
-        #4. Create JWT Token
-        token = create_access_token(identity=user.email, expires_delta=timedelta(hours=2))
-        return {'token': token, 'user': UserSchema(exclude=['password']).dump(user)}
-    else:
-        return {'error': 'Invalid email or password'}, 401
-    print(user)
-    #3. Check the password hash
-    #4. Create JWT Token
-    #5. Return the token
-    return 'ok'
 
 @app.route('/users/<userId>', methods=['PATCH'])
 def update_user(userId):
@@ -180,7 +63,7 @@ def delete_user(userId):
 @app.route('/cards')
 @jwt_required()
 def all_cards():
-    admin_required()
+    # admin_required()
     #1 get token from user instance,
    
     # select * from cards in stmt variable to ;
