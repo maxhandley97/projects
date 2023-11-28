@@ -49,3 +49,12 @@ def db_seed():
     db.session.add_all(cards)
     db.session.commit()
     print('Database seeded')
+
+# @app.cli.command('all_cards')
+# def all_cards(): #by default SQLALchemy method will do *, comma seperate to stack
+#     stmt = db.select(Card).where(db.or_(Card.status != 'Done', Card.id > 2)).order_by(Card.title.desc) # parse in class, by association knows table
+#     # print(stmt) #good for debugging quieries
+#     cards = db.session.scalars(stmt) #need to execute, scalars gets list of objects
+#     # print(cards.all()) #method to convert results to list
+#     for card in cards:
+#         print(card.__dict__) 

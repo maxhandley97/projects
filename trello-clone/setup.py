@@ -4,6 +4,8 @@ from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from os import environ
+from sqlalchemy.exc import IntegrityError
+
 
 
 app = Flask(__name__)
@@ -16,3 +18,11 @@ db = SQLAlchemy(app) #connects two
 ma = Marshmallow(app) #initialises, connects with flask
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
+
+@app.errorhandler(401)
+def unauthorized(err):
+    return {'error': 'you are not authorized to access this resource'}
+
+@app.errorhandler(IntegrityError)
+def integrity_error(err):
+    return {'error': str(err)}, 409
