@@ -5,12 +5,13 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from os import environ
 from sqlalchemy.exc import IntegrityError
+from marshmallow.exceptions import ValidationError
 
 
 
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = environ.get('JWT_KEY') #used to sign JWT
-app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DB_URI') #database connection string
+app.config["JWT_SECRET_KEY"] = environ.get("JWT_KEY") #used to sign JWT
+app.config["SQLALCHEMY_DATABASE_URI"] = environ.get("DB_URI") #database connection string
 # avoid depreciation warning
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -21,8 +22,12 @@ jwt = JWTManager(app)
 
 @app.errorhandler(401)
 def unauthorized(err):
-    return {'error': 'you are not authorized to access this resource'}
+    return {"error": "you are not authorized to access this resource"}
 
 @app.errorhandler(IntegrityError)
 def integrity_error(err):
-    return {'error': str(err)}, 409
+    return {"error": str(err)}, 409
+
+@app.errorhandler(ValidationError)
+def validation_error(err):
+    return {"error": err.messages}

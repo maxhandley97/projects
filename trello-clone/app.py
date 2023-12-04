@@ -8,5 +8,7 @@ app.register_blueprint(db_commands)
 app.register_blueprint(users_bp)
 app.register_blueprint(cards_bp)
 
+# print(app.url_map)
+
 #so basically flask allows us to create route that can be access by clients and then 
-# flask sqlalchemy + marshmallow allows us to create object out of our database to manipulate and then convert it to json so that the data can be transmitted via the routes and therefore that's the transition of data ?
+# flask sqlalchemy + marshmallow allows us to create object out of our database to manipulate and then convert it to json so that the data can be transmitted via the routes and therefore that"s the transition of data ?
