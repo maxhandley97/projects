@@ -49,16 +49,16 @@ def delete_comment(card_id, comment_id):
         return {"error": "Comment not found"}, 404
     
     
-# # Get all comments
-# @comments_bp.route("/")
-# @jwt_required()
-# def all_comments():
-#     # select * from comments;
-#     stmt = db.select(
-#         Comment
-#     )  # .where(db.or_(Comment.status != "Done", Comment.id > 2)).order_by(Comment.title.desc())
-#     comments = db.session.scalars(stmt).all()
-#     return CommentSchema(many=True, exclude=["user.comments"]).dump(comments)
+# Get all comments
+@comments_bp.route("/")
+@jwt_required()
+def all_comments():
+    # select * from comments;
+    stmt = db.select(
+        Comment
+    )  # .where(db.or_(Comment.status != "Done", Comment.id > 2)).order_by(Comment.title.desc())
+    comments = db.session.scalars(stmt).all()
+    return CommentSchema(many=True, exclude=["user.comments"]).dump(comments)
 
 # # Get one comment
 # @comments_bp.route("/<int:id>")
