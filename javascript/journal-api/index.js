@@ -1,4 +1,5 @@
 import express from 'express'
+import mongoose from 'mongoose'
 
 const categories = ["Food", 'Gaming', 'Coding', 'Other']
 
@@ -7,6 +8,22 @@ const entries = [
     { category: 'Coding', content: 'Coding is fun!'},
     { category: 'Gaming', content: 'Lets PWN some NWBS'}
 ]
+
+// connect mongoose Object Data Modelling as early as possible; between / and ? put _dbname_
+mongoose.connect('')
+
+    .then(m => console.log(m.connection.readyState === 1 ? 'MongoDB connected!' : "MongoDB failed to connect"))
+    .catch(err => console.error(err))
+
+//connect to schema, entity name plural + Schema
+const entriesSchema = new mongoose.Schema({
+    // each entry is a key and data type, required = true for validation
+    category: { type: String, required: true },
+    content: { type: String, required: true }
+})
+
+// create model, give it an identifying name, singular; which schema defines the model
+const EntryModel = mongoose.model('Entry', entriesSchema)
 
 // to parse json data
 const app = express()
@@ -38,16 +55,24 @@ app.get('/entries/:id', (req, res) => {
     // res.sendStatus(204)
 })
 
+// make post handler async and await result
+app.post('/entries', async (req, res) => {
+        try {//1. get entry data from the request
+        // console.log(req.body)
+        //2 TODO: validate / make sure in the correct format
+        //3. create a new entry object
+        //4. push the new entry to the array
+        // // instead of pushing to an array, 
+        const insertedEntry = await EntryModel.create(req.body)
+        // entries.push(req.body)
+        //5. respond with 201 and the created entry; push to array
+        // res.status(201).send((entries[entries.length - 1]))
 
-app.post('/entries', (req, res) => {
-    //1. get entry data from the request
-    console.log(req.body)
-    //2 TODO: validate / make sure in the correct format
-    //3. create a new entry object
-    //4. push the new entry to the array
-    entries.push(req.body)
-    //5. respond with 201 and the created entry
-    res.status(201).send((entries[entries.length - 1]))
+        res.status(201).send(insertedEntry)
+        }
+        catch (err) {
+            res.status(400).send({ error: err.message})
+        }
 })
 
 // starts server, listens to connections on ports
