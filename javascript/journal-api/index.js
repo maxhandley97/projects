@@ -7,15 +7,15 @@ const entries = [
     { category: 'Coding', content: 'Coding is fun!'},
     { category: 'Gaming', content: 'Lets PWN some NWBS'}
 ]
-// to parse json data
 
+// to parse json data
 const app = express()
+
 // express based on philosphy of building blocks, server is little pieces each which do one thing
 app.use(express.json())
 
 // rather than having a decorator to specifiy a route and a funcition that is a route handler
 //use method and pass function as a callback, method different, concept same.
-
 
 // request/response are objects, automatically parsed by .get method.
 app.get('/', (req, res) => res.send({info: "Journal API"}))
@@ -24,9 +24,12 @@ app.get('/categories', (req, res) => res.send(categories))
 
 app.get('/entries/', (req, res) => res.send(entries))
 
+
+app.get('/entries/foo', (req, res) => res.send({foo: 'bar'}))
+
 app.get('/entries/:id', (req, res) => {
     const entry = entries[req.params.id - 1]
-    if (entry) {
+    if (entry) {4
         res.send(entry)
     } else {
         res.status(404).send({error: "No entry found"})
@@ -34,6 +37,7 @@ app.get('/entries/:id', (req, res) => {
     // console.log(req.params)
     // res.sendStatus(204)
 })
+
 
 app.post('/entries', (req, res) => {
     //1. get entry data from the request
