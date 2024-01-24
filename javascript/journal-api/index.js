@@ -1,35 +1,7 @@
 import express from 'express'
-import mongoose from 'mongoose'
-import dotenv from 'dotenv'
-
-// config method reads env file and sets up envioronment variables
-dotenv.config()
+import { EntryModel, CategoryModel } from './db.js'
 
 const categories = ["Food", 'Gaming', 'Coding', 'Other']
-
-const entries = [
-    { category: 'Food', content: 'Pizza is yummy' },
-    { category: 'Coding', content: 'Coding is fun!'},
-    { category: 'Gaming', content: 'Lets PWN some NWBS'}
-]
-
-// connect mongoose Object Data Modelling as early as possible; between / and ? put _dbname_
-mongoose.connect(process.env.DB_URI)
-
-    .then(m => console.log(m.connection.readyState === 1 ? 'MongoDB connected!' : "MongoDB failed to connect"))
-    .catch(err => console.error(err))
-//event listener raised when you terminate, to disconnect the database connection
-process.on('SIGTERM', () => mongoose.disconnect());
-
-//connect to schema, entity name plural + Schema
-const entriesSchema = new mongoose.Schema({
-    // each entry is a key and data type, required = true for validation
-    category: { type: String, required: true },
-    content: { type: String, required: true }
-})
-
-// create model, give it an identifying name, singular; which schema defines the model
-const EntryModel = mongoose.model('Entry', entriesSchema)
 
 // to parse json data
 const app = express()
@@ -43,15 +15,18 @@ app.use(express.json())
 // request/response are objects, automatically parsed by .get method.
 app.get('/', (req, res) => res.send({info: "Journal API"}))
 
-app.get('/categories', (req, res) => res.send(categories))
+app.get('/categories', async (req, res) => res.send(await CategoryModel.find()))
 
 app.get('/entries/', async (req, res) => res.send(await EntryModel.find()))
 
 app.get('/entries/foo', (req, res) => res.send({foo: 'bar'}))
 
-app.get('/entries/:id', (req, res) => {
-    const entry = entries[req.params.id - 1]
-    if (entry) {4
+app.get('/entries/:id', async (req, res) => {
+    // use findOne instead of find to get object without being in an array {_id: req.params.id}
+    // or use finById 
+    const entry = await EntryModel.findById(req.params.id)
+    console.log(entry)
+    if (entry) {
         res.send(entry)
     } else {
         res.status(404).send({error: "No entry found"})
@@ -76,8 +51,37 @@ app.post('/entries', async (req, res) => {
             res.status(201).send(insertedEntry)
         }
         catch (err) {
-            res.status(400).send({ error: err.message})
+            res.status(500).send({ error: err.message})
         }
+})
+
+app.put('/entries/:id', async (req, res) => {
+    try {
+        // first param: the id of the entry, 
+        const updatedEntry = await EntryModel.findByIdAndUpdate(req.params.id, req.body, { new: true })
+        if (updatedEntry) {
+            res.send(updatedEntry)
+        } else {
+            res.status(404).send({ error: 'entry not found' })
+        }
+    }
+    catch (err) {
+        res.status(500).send({ error: err.message})
+    }
+})
+
+app.delete('/entries/:id', async (req, res) => {
+    try {
+        const deletedEntry = await EntryModel.findByIdAndDelete(req.params.id)
+        if (deletedEntry) {
+            res.status(204).send({ 'Success': 'entry deleted' })
+        } else {
+            res.status(404).send({ error: 'entry not found' })
+        }
+    }
+    catch (err) {
+        res.status(500).send({ error: err.message})
+    }
 })
 
 // starts server, listens to connections on ports
