@@ -1,5 +1,9 @@
 import express from 'express'
 import mongoose from 'mongoose'
+import dotenv from 'dotenv'
+
+// config method reads env file and sets up envioronment variables
+dotenv.config()
 
 const categories = ["Food", 'Gaming', 'Coding', 'Other']
 
@@ -10,10 +14,12 @@ const entries = [
 ]
 
 // connect mongoose Object Data Modelling as early as possible; between / and ? put _dbname_
-mongoose.connect('')
+mongoose.connect(process.env.DB_URI)
 
     .then(m => console.log(m.connection.readyState === 1 ? 'MongoDB connected!' : "MongoDB failed to connect"))
     .catch(err => console.error(err))
+//event listener raised when you terminate, to disconnect the database connection
+process.on('SIGTERM', () => mongoose.disconnect());
 
 //connect to schema, entity name plural + Schema
 const entriesSchema = new mongoose.Schema({
@@ -39,8 +45,7 @@ app.get('/', (req, res) => res.send({info: "Journal API"}))
 
 app.get('/categories', (req, res) => res.send(categories))
 
-app.get('/entries/', (req, res) => res.send(entries))
-
+app.get('/entries/', async (req, res) => res.send(await EntryModel.find()))
 
 app.get('/entries/foo', (req, res) => res.send({foo: 'bar'}))
 
@@ -58,17 +63,17 @@ app.get('/entries/:id', (req, res) => {
 // make post handler async and await result
 app.post('/entries', async (req, res) => {
         try {//1. get entry data from the request
-        // console.log(req.body)
-        //2 TODO: validate / make sure in the correct format
-        //3. create a new entry object
-        //4. push the new entry to the array
-        // // instead of pushing to an array, 
-        const insertedEntry = await EntryModel.create(req.body)
-        // entries.push(req.body)
-        //5. respond with 201 and the created entry; push to array
-        // res.status(201).send((entries[entries.length - 1]))
+            // console.log(req.body)
+            //2 TODO: validate / make sure in the correct format
+            //3. create a new entry object
+            //4. push the new entry to the array
+            // // instead of pushing to an array, 
+            const insertedEntry = await EntryModel.create(req.body)
+            // entries.push(req.body)
+            //5. respond with 201 and the created entry; push to array
+            // res.status(201).send((entries[entries.length - 1]))
 
-        res.status(201).send(insertedEntry)
+            res.status(201).send(insertedEntry)
         }
         catch (err) {
             res.status(400).send({ error: err.message})
