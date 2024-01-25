@@ -29,7 +29,7 @@ const CategoryModel = mongoose.model('Category', categoriesSchema)
 //connect to schema, entity name plural + Schema
 const entriesSchema = new mongoose.Schema({
     // each entry is a key and data type, required = true for validation
-    category: { type: String, required: true },
+    category: { type: mongoose.ObjectId, ref: 'Category' },
     content: { type: String, required: true }
 })
 
