@@ -11,7 +11,9 @@ const Navbar = () => {
   return (
     <nav className="navbar has-background-info-light" role="navigation" aria-label="main navigation">
   <div className="navbar-brand">
-    <h1>Journal</h1>
+    <Link to='/'>
+      <h1>Journal</h1>
+    </Link>
     <a role="button" onClick={toggleHamburger} className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>
@@ -25,10 +27,7 @@ const Navbar = () => {
         Home
         </Link>
       <Link to="/category" className="navbar-item">
-       Select Category
-      </Link>
-      <Link to="/entry/new" className="navbar-item">
-       New Entry
+       Create Entry
       </Link>
     </div>
   </div>
