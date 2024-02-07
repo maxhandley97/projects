@@ -1,22 +1,25 @@
 import React, { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 const NewEntry = ({ categories, addEntry }) => {
     const params = useParams()
     const [entry, setEntry] = useState('')
+    const nav = useNavigate()
 
-    function createEntry(e) {
+    async function createEntry(e) {
       e.preventDefault()
       //create a new entry
       //1. create a entry object with from user input
-      addEntry(params.cat_id, entry)
+      const id = await addEntry(params.cat_id, entry)
       //3. clear existing input
       setEntry('')
+      //4. Redirect the browser to the new entry
+      nav(`/entry/${id}`)
     }
 
     return (
     <>
-      <h3>New entry in category {categories[params.cat_id]}</h3>
+      <h3>New entry in category {categories[params.cat_id]?.name}</h3>
       <form className='section' onSubmit={createEntry}>
         <div className="field">
           <label className='label'>Content</label>
