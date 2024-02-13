@@ -13,11 +13,11 @@ const App = () => {
   const [entries, setEntries] = useState([])
   
   useEffect (() => {
-    fetch('http://localhost:4001/categories')
+    fetch('https://maxs-journal-api.onrender.com/categories')
     .then(res => res.json())
     .then(data => setCategories(data))
 
-    fetch('http://localhost:4001/entries')
+    fetch('https://maxs-journal-api.onrender.com/entries')
     .then(res => res.json())
     .then(data => setEntries(data))
   },[])
@@ -30,7 +30,7 @@ const App = () => {
         content: content,
     }
     // POST new entry to API
-    const res = await fetch('http://localhost:8003/entries', {
+    const res = await fetch('https://maxs-journal-api.onrender.com/entries', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
